@@ -26,57 +26,49 @@ import {
   SelectValue,
 } from "./ui/select";
 import { randInt } from "three/src/math/MathUtils.js";
+import { Manager } from "socket.io-client";
 
 const CustomGeometryParticles = ({ count, shape, distance }: SceneProps) => {
-  // Generate our positions attributes array
-  const particlesPosition = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    console.log(shape);
-    if (shape === "box") {
-      for (let i = 0; i < count; i++) {
-        const x = (Math.random() - 0.5) * 2;
-        const y = (Math.random() - 0.5) * 2;
-        const z = (Math.random() - 0.5) * 2;
+  const [lidarData, setLidarData] = useState<Float32Array>(new Float32Array());
+  const manager = new Manager("localhost:5000", {
+    autoConnect: true,
+  });
 
-        positions.set([x, y, z], i * 3);
-      }
-    }
+  const socket = manager.socket("/"); // main namespace
+  socket.on("connect", () => {
+    console.log("connected");
+  });
 
-    if (shape === "sphere") {
-      for (let i = 0; i < count; i++) {
-        const theta = THREE.MathUtils.randFloatSpread(360);
-        const phi = THREE.MathUtils.randFloatSpread(360);
+  socket.on("scan", (data: number[]) => {
+    const arr = new Float32Array(data);
+    setLidarData(arr);
+  });
 
-        const x = distance * Math.sin(theta) * Math.cos(phi);
-        const y = distance * Math.sin(theta) * Math.sin(phi);
-        const z = distance * Math.cos(theta);
+  console.log(lidarData);
 
-        positions.set([x, y, z], i * 3);
-      }
-    }
-    return positions;
-  }, [count, shape, distance]);
+  socket.emit("lidar");
 
   useEffect(() => {
-    if (points.current) {
+    if (points.current && !!points.current.geometry.attributes.position) {
       points.current.geometry.attributes.position.needsUpdate = true;
     }
-  }, [particlesPosition]);
+  }, [lidarData]);
 
   const points = useRef<THREE.Points>();
   return (
-    <points ref={points} key={count}>
+    //@ts-ignore
+    <points ref={points} key={lidarData.length}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={particlesPosition.length / 3}
-          array={particlesPosition}
+          count={lidarData.length / 3}
+          array={lidarData}
           itemSize={3}
         />
       </bufferGeometry>
       <pointsMaterial
         size={0.015}
-        color="#5786F5"
+        color="#008000"
         sizeAttenuation
         depthWrite={false}
       />
@@ -100,10 +92,8 @@ export const PointCloudCard = () => {
     distance: 5,
   });
 
-  const shapes: ShapeType[] = ["box", "sphere"];
-
   return (
-    <Card className="relative flex h-full w-96 flex-col">
+    <Card className="relative flex h-full w-auto flex-col">
       <CardHeader>
         <CardTitle>Point Cloud</CardTitle>
         <CardDescription>View the cloud</CardDescription>
@@ -112,9 +102,10 @@ export const PointCloudCard = () => {
         <Canvas className="flex-grow" camera={{ position: [1.5, 1.5, 1.5] }}>
           <ambientLight intensity={0.5} />
           <CustomGeometryParticles {...state} />
-          <OrbitControls autoRotate />
+          <OrbitControls />
         </Canvas>
       </CardContent>
+      {/*
       <CardFooter className="grid w-96 gap-2">
         <div className="flex gap-4">
           <Button
@@ -201,7 +192,7 @@ export const PointCloudCard = () => {
             </SelectContent>
           </Select>
         </div>
-      </CardFooter>
+      </CardFooter>*/}
     </Card>
   );
 };

@@ -75,7 +75,7 @@ const data = [
   },
 ];
 
-function valueFormatter(number) {
+function valueFormatter(number: number) {
   const formatter = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
     notation: "compact",

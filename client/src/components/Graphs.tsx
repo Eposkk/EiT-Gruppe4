@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "./ui/card";
 
-function classNames(...classes) {
+function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -116,11 +116,12 @@ export function LineChartCard() {
           <List className="mt-2 grid gap-4">
             <h2>Averages</h2>
             <div>
-              {summary.map((item) => (
+              {/*summary.map((item) => (
                 <ListItem key={item.name}>
                   <div className="flex items-center space-x-2">
                     <span
                       className={classNames(
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                         statusColor[item.name],
                         "h-0.5 w-3",
                       )}
@@ -132,7 +133,7 @@ export function LineChartCard() {
                     {valueFormatter(item.value)}
                   </span>
                 </ListItem>
-              ))}
+                      ))*/}
             </div>
           </List>
         </CardContent>
