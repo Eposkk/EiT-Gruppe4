@@ -93,7 +93,7 @@ type SceneProps = {
   distance: number;
 };
 
-const Scene = () => {
+export const PointCloudCard = () => {
   const [state, setState] = useState<SceneProps>({
     shape: "sphere",
     count: 20000,
@@ -205,5 +205,3 @@ const Scene = () => {
     </Card>
   );
 };
-
-export default Scene;

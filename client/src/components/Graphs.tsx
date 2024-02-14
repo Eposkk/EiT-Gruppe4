@@ -93,7 +93,7 @@ const statusColor = {
   Affiliate: "bg-fuchsia-500",
 };
 
-export function Graphs() {
+export function LineChartCard() {
   return (
     <>
       <Card className="relative flex h-full w-96 flex-col">
@@ -128,7 +128,7 @@ export function Graphs() {
                     />
                     <span>{item.name}</span>
                   </div>
-                  <span className="text-tremor-content-strong dark:text-dark-tremor-content-strong font-medium">
+                  <span className="dark:text-dark-tremor-content-strong font-medium text-tremor-content-strong">
                     {valueFormatter(item.value)}
                   </span>
                 </ListItem>
