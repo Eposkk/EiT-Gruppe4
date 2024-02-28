@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Ouster Viewer</title>
+	<body>
+		<script type="text/javascript" charset="utf-8">
+			const lidarFrequency = 10;
+			const jitterBufferLength = 20;
+			const jitterBufferMaxLength = 40;
+
+            var pc = new RTCPeerConnection();
+			pc.onnegotiationneeded = async function() {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                const response = await fetch("/offer", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sdp: pc.localDescription.sdp,
+                        type: pc.localDescription.type
+                    })
+                });
+
+                const answer = await response.json();
+                await pc.setRemoteDescription(answer);
+            };
+
+			var jitterBuffer = [];
+			window.onload = function() {
+				var canvas = document.getElementById("lidar_scan");
+
+				var gl = canvas.getContext("webgl");
+				gl.clearColor(0.0, 0.0, 0.0, 1.0);
+				gl.enable(gl.DEPTH_TEST);
+				gl.viewport(0, 0, canvas.width, canvas.height);
+
+				var vertexBuffer = gl.createBuffer();
+
+				var vertCode = `
+					attribute vec3 coordinates;
+					void main(void) {
+						gl_Position = vec4(coordinates, 1.0);
+						gl_PointSize = 1.0;
+					}
+				`;
+				var vertShader = gl.createShader(gl.VERTEX_SHADER);
+				gl.shaderSource(vertShader, vertCode);
+				gl.compileShader(vertShader);
+
+				var fragCode = `
+					void main(void) {
+						gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+					}
+				`;
+				var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+				gl.shaderSource(fragShader, fragCode);
+				gl.compileShader(fragShader);
+
+				var shaderProgram = gl.createProgram();
+				gl.attachShader(shaderProgram, vertShader);
+				gl.attachShader(shaderProgram, fragShader);
+				gl.linkProgram(shaderProgram);
+				gl.useProgram(shaderProgram);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+				var coord = gl.getAttribLocation(shaderProgram, "coordinates");
+				gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
+				gl.enableVertexAttribArray(coord);
+
+				var draw = function() {
+					console.log(jitterBuffer.length);
+					if (jitterBuffer.length > 0) {
+						var data = jitterBuffer.shift();
+
+						gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+						gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+
+						gl.clear(gl.COLOR_BUFFER_BIT);
+						gl.drawArrays(gl.POINTS, 0, data.byteLength / 12);
+					}
+
+					setTimeout(data, 1000 * (1 + 0.5 * (jitterBufferLength - jitterBuffer.length) / jitterBufferLength) / lidarFrequency);
+				};
+				draw();
+			};
+
+			var dc = pc.createDataChannel("lidar_scan");
+			dc.onmessage = function(event) {
+				console.log("%d points received", event.data.byteLength / 12);
+				jitterBuffer.push(event.data);
+				if (jitterBuffer.length > jitterBufferMaxLength) {
+					jitterBuffer.shift();
+				}
+			}
+		</script>
+        <canvas id="lidar_scan" width="500" height="500"></canvas>
+	</body>
+</html>

@@ -30,4 +30,4 @@ def lidar():
 if __name__ == "__main__":
     app.logger.setLevel(logging.INFO)
     socketio.start_background_task(target=lidar)
-    socketio.run(app)
+    socketio.run(app, host="0.0.0.0")
