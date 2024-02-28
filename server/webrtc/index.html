@@ -83,7 +83,7 @@
 						gl.drawArrays(gl.POINTS, 0, data.byteLength / 12);
 					}
 
-					setTimeout(data, 1000 * (1 + 0.5 * (jitterBufferLength - jitterBuffer.length) / jitterBufferLength) / lidarFrequency);
+					setTimeout(draw, 1000 * (1 + 0.5 * (jitterBufferLength - jitterBuffer.length) / jitterBufferLength) / lidarFrequency);
 				};
 				draw();
 			};
