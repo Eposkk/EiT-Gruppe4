@@ -1,7 +1,14 @@
 "use client";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as THREE from "three";
 import "./scene.css";
 import { Button } from "./ui/button";
@@ -28,41 +35,25 @@ import {
 import { randInt } from "three/src/math/MathUtils.js";
 import { Manager } from "socket.io-client";
 
-const CustomGeometryParticles = ({ count, shape, distance }: SceneProps) => {
-  const [lidarData, setLidarData] = useState<Float32Array>(new Float32Array());
-  const manager = new Manager("localhost:5000", {
-    autoConnect: true,
-  });
-
-  const socket = manager.socket("/"); // main namespace
-  socket.on("connect", () => {
-    console.log("connected");
-  });
-
-  socket.on("scan", (data: number[]) => {
-    const arr = new Float32Array(data);
-    setLidarData(arr);
-  });
-
-  console.log(lidarData);
-
-  socket.emit("lidar");
-
-  useEffect(() => {
-    if (points.current && !!points.current.geometry.attributes.position) {
-      points.current.geometry.attributes.position.needsUpdate = true;
-    }
-  }, [lidarData]);
+const CustomGeometryParticles = ({
+  vertices,
+  setVertices,
+}: {
+  vertices: Float32Array;
+  setVertices: Dispatch<SetStateAction<Float32Array>>;
+}) => {
+  const meshRef = useRef();
 
   const points = useRef<THREE.Points>();
+
   return (
     //@ts-ignore
-    <points ref={points} key={lidarData.length}>
+    <points ref={points} key={vertices.length}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={lidarData.length / 3}
-          array={lidarData}
+          count={vertices.length / 3}
+          array={vertices}
           itemSize={3}
         />
       </bufferGeometry>
@@ -85,13 +76,13 @@ type SceneProps = {
   distance: number;
 };
 
-export const PointCloudCard = () => {
-  const [state, setState] = useState<SceneProps>({
-    shape: "sphere",
-    count: 20000,
-    distance: 5,
-  });
-
+export const PointCloudCard = ({
+  vertices,
+  setVertices,
+}: {
+  vertices: Float32Array;
+  setVertices: Dispatch<SetStateAction<Float32Array>>;
+}) => {
   return (
     <Card className="relative flex h-full w-auto flex-col">
       <CardHeader>
@@ -101,7 +92,10 @@ export const PointCloudCard = () => {
       <CardContent>
         <Canvas className="flex-grow" camera={{ position: [1.5, 1.5, 1.5] }}>
           <ambientLight intensity={0.5} />
-          <CustomGeometryParticles {...state} />
+          <CustomGeometryParticles
+            setVertices={setVertices}
+            vertices={vertices}
+          />
           <OrbitControls />
         </Canvas>
       </CardContent>
