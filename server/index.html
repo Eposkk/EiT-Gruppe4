@@ -29,7 +29,8 @@
                 await pc.setRemoteDescription(answer);
             };
 
-			var jitterBuffer = [];
+			// var jitterBuffer = [];
+			var lidar_dc = pc.createDataChannel("lidar_scan");
 			window.onload = function() {
 				var canvas = document.getElementById("lidar_scan");
 
@@ -43,7 +44,7 @@
 				var vertCode = `
 					attribute vec3 coordinates;
 					void main(void) {
-						gl_Position = vec4(coordinates, 1.0);
+						gl_Position = vec4(0.1 * coordinates, 1.0);
 						gl_PointSize = 1.0;
 					}
 				`;
@@ -71,30 +72,41 @@
 				gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
 				gl.enableVertexAttribArray(coord);
 
-				var draw = function() {
-					console.log(jitterBuffer.length);
-					if (jitterBuffer.length > 0) {
-						var data = jitterBuffer.shift();
+				// var draw = function() {
+				// 	if (jitterBuffer.length > 0) {
+				// 		var data = jitterBuffer.shift();
 
-						gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-						gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+				// 		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+				// 		gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 
-						gl.clear(gl.COLOR_BUFFER_BIT);
-						gl.drawArrays(gl.POINTS, 0, data.byteLength / 12);
-					}
+				// 		gl.clear(gl.COLOR_BUFFER_BIT);
+				// 		gl.drawArrays(gl.POINTS, 0, data.byteLength / 12);
+				// 	}
+				// 	setTimeout(draw, 1000 * (1 + 0.5 * (jitterBufferLength - jitterBuffer.length) / jitterBufferLength) / lidarFrequency);
+				// };
+				// draw();
 
-					setTimeout(draw, 1000 * (1 + 0.5 * (jitterBufferLength - jitterBuffer.length) / jitterBufferLength) / lidarFrequency);
-				};
-				draw();
+				lidar_dc.onmessage = function(event) {
+					gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+					gl.bufferData(gl.ARRAY_BUFFER, event.data, gl.STATIC_DRAW);
+
+					gl.clear(gl.COLOR_BUFFER_BIT);
+					gl.drawArrays(gl.POINTS, 0, event.data.byteLength / 12);
+				}
 			};
 
-			var dc = pc.createDataChannel("lidar_scan");
-			dc.onmessage = function(event) {
-				console.log("%d points received", event.data.byteLength / 12);
-				jitterBuffer.push(event.data);
-				if (jitterBuffer.length > jitterBufferMaxLength) {
-					jitterBuffer.shift();
-				}
+			// var lidar_dc = pc.createDataChannel("lidar_scan");
+			// lidar_dc.onmessage = function(event) {
+			// 	jitterBuffer.push(event.data);
+			// 	if (jitterBuffer.length > jitterBufferMaxLength) {
+			// 		jitterBuffer.shift();
+			// 	}
+			// }
+
+			var sensor_dc = pc.createDataChannel("sensor_data");
+			var decoder = new TextDecoder();
+			sensor_dc.onmessage = function(event) {
+				console.log(JSON.parse(decoder.decode(event.data)));
 			}
 		</script>
         <canvas id="lidar_scan" width="500" height="500"></canvas>
