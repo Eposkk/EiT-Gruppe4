@@ -90,7 +90,10 @@ export const PointCloudCard = ({
         <CardDescription>View the cloud</CardDescription>
       </CardHeader>
       <CardContent>
-        <Canvas className="flex-grow" camera={{ position: [1.5, 1.5, 1.5] }}>
+        <Canvas
+          className="flex-grow"
+          camera={{ position: [1.5, 1.5, 1.5], fov: 90 }}
+        >
           <ambientLight intensity={0.5} />
           <CustomGeometryParticles
             setVertices={setVertices}
