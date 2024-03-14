@@ -1,17 +1,9 @@
 import aiohttp_cors
 import asyncio
-import json
 import logging
-import numpy as np
 import os
-import pmsa003i
-import time
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription
-from bme688 import BME680_I2C
-from contextlib import closing
-from ouster import client
-from producer import RTCProducer
 
 
 ROOT = os.path.dirname(__file__)
@@ -20,42 +12,24 @@ ROOT = os.path.dirname(__file__)
 lidar_hostname = "os1-122013000119.local"
 lidar_min_range = 1.0
 lidar_max_range = 20.0
+fake_lidar = False
+fake_sensor = False
 
 
-class LidarProducer(RTCProducer):
-    def produce(self):
-        with closing(client.Sensor(lidar_hostname, 7502, 7503)) as source:
-            xyzlut = client.XYZLut(source.metadata)
-            with closing(client.Scans(source)) as scans:
-                for scan in scans:
-                    range = scan.field(client.ChanField.RANGE)
-                    range_destaggered = client.destagger(source.metadata, range)
-                    mask = np.logical_and(
-                        range_destaggered >= lidar_min_range * 1000,
-                        range_destaggered <= lidar_max_range * 1000)
-                    xyz_destaggered = client.destagger(source.metadata, xyzlut(scan))
-                    data = np.ascontiguousarray(xyz_destaggered[mask], dtype='<f4').tobytes()
-                    self.send(data)
+if fake_lidar:
+    from fake import FakeLidarProducer as LidarProducer
+else:
+    from lidar import LidarProducer
 
-
-class SensorProducer(RTCProducer):
-    def produce(self):
-        sensor = BME680_I2C(i2c_bus=1)
-        while True:
-            data = json.dumps({
-                "seconds": time.time(),
-                "temperature": sensor.temperature,
-                "pressure": sensor.pressure,
-                "humidity": sensor.humidity,
-                "gas": sensor.gas,
-                "particles": pmsa003i.read()
-            }).encode("utf-8")
-            self.send(data)
+if fake_sensor:
+    from fake import FakeSensorProducer as SensorProducer
+else:
+    from sensors import SensorProducer
 
 
 pcs = set()
 producers = {
-    "lidar_scan": LidarProducer(),
+    "lidar_scan": LidarProducer(lidar_hostname, lidar_min_range, lidar_max_range),
     "sensor_data": SensorProducer()
 }
 
