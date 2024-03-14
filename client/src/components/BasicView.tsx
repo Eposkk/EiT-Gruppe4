@@ -11,6 +11,7 @@ import {
 } from "~/components/ui/card";
 import { useEffect, useRef, useState } from "react";
 import { AirQualityData, ParticleGraphCard } from "./ParticleGraph";
+import { env } from "~/env";
 
 export default function BasicView() {
   const [data, setData] = useState<LineChartCardProps[]>([]);
@@ -105,7 +106,7 @@ export default function BasicView() {
           const offer = await pc.current.createOffer();
           await pc.current.setLocalDescription(offer);
 
-          const response = await fetch("http://10.22.34.141:8080/offer", {
+        const response = await fetch(`http://${env.NEXT_PUBLIC_SERVER_IP}/offer`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
