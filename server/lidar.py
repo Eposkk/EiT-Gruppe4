@@ -1,3 +1,4 @@
+import DracoPy
 import numpy as np
 from contextlib import closing
 from ouster import client
@@ -22,5 +23,6 @@ class LidarProducer(RTCProducer):
                         range_destaggered >= self.lidar_min_range_mm,
                         range_destaggered <= self.lidar_max_range_mm)
                     xyz_destaggered = client.destagger(source.metadata, xyzlut(scan))
-                    data = np.ascontiguousarray(xyz_destaggered[mask], dtype='<f4').tobytes()
+                    # data = np.ascontiguousarray(xyz_destaggered[mask], dtype='<f4').tobytes()
+                    data = DracoPy.encode(xyz_destaggered.reshape(-1, 3))
                     self.send(data)

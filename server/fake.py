@@ -1,3 +1,4 @@
+import DracoPy
 import json
 import numpy as np
 import time
@@ -9,7 +10,9 @@ class FakeLidarProducer(RTCProducer):
 
     def produce(self):
         while True:
-            data = np.random.rand(16 * 1024).tobytes()
+            xyz_destaggered = np.random.rand(16, 1024, 3)
+            # data = xyz_destaggered.tobytes()
+            data = DracoPy.encode(xyz_destaggered.reshape(-1, 3))
             self.send(data)
             time.sleep(0.1)
 
