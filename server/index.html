@@ -4,7 +4,15 @@
 		<meta charset="UTF-8">
 		<title>Ouster Viewer</title>
 	<body>
+		<script src="https://www.gstatic.com/draco/versioned/decoders/1.5.7/draco_decoder.js"></script>
 		<script type="text/javascript" charset="utf-8">
+			let draco = null;
+			let dracoDecoder = null;
+			DracoDecoderModule().then(module => {
+				draco = module;
+				dracoDecoder = new module.Decoder();
+			});
+
             var pc = new RTCPeerConnection();
 			var lidar_dc = pc.createDataChannel("lidar_scan");
 			var sensor_dc = pc.createDataChannel("sensor_data");
@@ -69,12 +77,35 @@
 				gl.vertexAttribPointer(coord, 3, gl.FLOAT, false, 0, 0);
 				gl.enableVertexAttribArray(coord);
 
-				lidar_dc.onmessage = function(event) {
+				lidar_dc.onmessage = async function(message) {
+					const dracoPointCloud = new draco.PointCloud();
+					let status = dracoDecoder.DecodeArrayToPointCloud(new Int8Array(message.data), message.data.byteLength, dracoPointCloud);
+				
+					if (!status.ok()) {
+						console.error(status.error_msg());
+						return;
+					}
+
+					const attributeId = dracoDecoder.GetAttributeId(dracoPointCloud, draco.POSITION);
+					const attribute = dracoDecoder.GetAttribute(dracoPointCloud, attributeId);
+
+					const numComponents = attribute.num_components();
+					const numPoints = dracoPointCloud.num_points();
+					const numValues = numPoints * numComponents;
+					const byteLength = numValues * Float32Array.BYTES_PER_ELEMENT;
+
+					const ptr = draco._malloc(byteLength);
+					dracoDecoder.GetAttributeDataArrayForAllPoints(dracoPointCloud, attribute, attribute.data_type(), byteLength, ptr);
+					const pointCloud = new Float32Array(draco.HEAPF32.buffer, ptr, numValues);
+					
+					draco._free(ptr);
+					draco.destroy(dracoPointCloud);
+
 					gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-					gl.bufferData(gl.ARRAY_BUFFER, event.data, gl.STATIC_DRAW);
+					gl.bufferData(gl.ARRAY_BUFFER, pointCloud, gl.STATIC_DRAW);
 
 					gl.clear(gl.COLOR_BUFFER_BIT);
-					gl.drawArrays(gl.POINTS, 0, event.data.byteLength / 12);
+					gl.drawArrays(gl.POINTS, 0, numPoints);
 				}
 
 				var output = document.getElementById("sensor_data");
@@ -82,7 +113,7 @@
 
 				sensor_dc.onmessage = function(event) {
 					var obj = JSON.parse(decoder.decode(event.data));
-					output.value = JSON.stringify(obj, null, 2);;
+					output.value = JSON.stringify(obj, null, 2);
 				}
 			};
 		</script>
