@@ -20,20 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { Slider } from "./ui/slider";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { randInt } from "three/src/math/MathUtils.js";
-import { Manager } from "socket.io-client";
 
 const CustomGeometryParticles = ({
   vertices,
@@ -46,6 +32,10 @@ const CustomGeometryParticles = ({
 
   const points = useRef<THREE.Points>();
 
+  useEffect(() => {
+    console.log("prdsa", points.current);
+    points.current?.rotation.set(100, 10, 10);
+  }, []);
   return (
     //@ts-ignore
     <points ref={points} key={vertices.length}>
@@ -70,12 +60,6 @@ const CustomGeometryParticles = ({
 // Define the type for shape
 type ShapeType = "box" | "sphere";
 
-type SceneProps = {
-  shape: ShapeType;
-  count: number;
-  distance: number;
-};
-
 export const PointCloudCard = ({
   vertices,
   setVertices,
@@ -99,7 +83,7 @@ export const PointCloudCard = ({
             setVertices={setVertices}
             vertices={vertices}
           />
-          <OrbitControls />
+          <OrbitControls enablePan enableRotate />
         </Canvas>
       </CardContent>
       {/*

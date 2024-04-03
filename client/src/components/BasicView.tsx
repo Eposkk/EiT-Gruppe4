@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { AirQualityData, ParticleGraphCard } from "./ParticleGraph";
 import { env } from "~/env";
+import PacmanLoader from "react-spinners/PacmanLoader";
 
 export default function BasicView() {
   const [data, setData] = useState<LineChartCardProps[]>([]);
@@ -106,16 +107,19 @@ export default function BasicView() {
           const offer = await pc.current.createOffer();
           await pc.current.setLocalDescription(offer);
 
-        const response = await fetch(`http://${env.NEXT_PUBLIC_SERVER_IP}/offer`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+          const response = await fetch(
+            `http://${env.NEXT_PUBLIC_SERVER_IP}:8080/offer`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                sdp: pc.current.localDescription?.sdp,
+                type: pc.current.localDescription?.type,
+              }),
             },
-            body: JSON.stringify({
-              sdp: pc.current.localDescription?.sdp,
-              type: pc.current.localDescription?.type,
-            }),
-          });
+          );
 
           console.log("Got response", response);
 
@@ -140,6 +144,17 @@ export default function BasicView() {
     };
   }, []);
 
+  if (pc.current?.iceConnectionState !== "connected") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="grid justify-items-center gap-2">
+          <h1>Connecting to the server</h1>
+          <PacmanLoader loading color="#496989" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main>
       <div className="flex flex-col gap-4 p-4">
@@ -159,13 +174,14 @@ export default function BasicView() {
                 <p className="flex gap-4">
                   {" "}
                   <Thermometer />
-                  Current Tempreature: {data[data.length - 1]?.temperature}
+                  Current Tempreature:{" "}
+                  {data[data.length - 1]?.temperature.toFixed(2)}
                 </p>
 
                 <p className="flex gap-4">
                   {" "}
                   <Droplets /> Current Hudmitity:{" "}
-                  {data[data.length - 1]?.hudmidity}
+                  {data[data.length - 1]?.hudmidity.toFixed(2)}
                 </p>
                 <p></p>
               </CardDescription>

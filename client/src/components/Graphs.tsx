@@ -126,6 +126,7 @@ export function LineChartCard({ data }: { data: LineChartCardProps[] }) {
             showXAxis={false}
             startEndOnly={true}
             className="mt-6 h-32"
+            minValue={980}
           />
           <List className="mt-2 grid gap-4">
             <h2>Averages</h2>
