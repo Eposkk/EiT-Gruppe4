@@ -70,8 +70,12 @@ export const PointCloudCard = ({
   return (
     <Card className="relative flex h-full w-auto flex-col">
       <CardHeader>
-        <CardTitle>Point Cloud</CardTitle>
-        <CardDescription>View the cloud</CardDescription>
+        <CardTitle>Visualization of LiDAR Point Cloud Data</CardTitle>
+        <CardDescription>
+          This graph visualizes LiDAR-generated point cloud data of Martian
+          caves, providing a detailed 3D representation of underground
+          formations on Mars
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Canvas

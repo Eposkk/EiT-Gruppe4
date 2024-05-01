@@ -7,6 +7,7 @@ import {
   CardTitle,
   CardDescription,
 } from "./ui/card";
+import { getColorForIndex } from "~/utils/getColorForIndex";
 
 export type AirQualityData = {
   seconds: number;
@@ -40,22 +41,6 @@ const statusColor = (name: string) => {
   return baseColors[Math.floor(Math.random() * baseColors.length)];
 };
 
-const getColorForIndex = (index: number): string => {
-  const colors = [
-    "blue",
-    "green",
-    "red",
-    "yellow",
-    "purple",
-    "orange",
-    "teal",
-    "pink",
-    "lime",
-    "amber",
-  ];
-  return colors[index % colors.length] ?? "teal";
-};
-
 export function ParticleGraphCard({ data }: { data: AirQualityData[] }) {
   if (data.length === 0) {
     // Render a placeholder or a loading indicator
@@ -69,10 +54,6 @@ export function ParticleGraphCard({ data }: { data: AirQualityData[] }) {
   );
 
   const colors = airQualityKeys.map((_, index) => getColorForIndex(index));
-  const summary = airQualityKeys.map((key) => ({
-    name: key,
-    value: data.flatMap((d) => d[key]).reduce((a, b) => a + b, 0) / data.length,
-  }));
 
   const envSummary = [
     {
@@ -138,8 +119,14 @@ export function ParticleGraphCard({ data }: { data: AirQualityData[] }) {
     <div className="flex gap-4">
       <Card className="relative flex h-full w-96 flex-col">
         <CardHeader>
-          <CardTitle>Air Quality Graph</CardTitle>
-          <CardDescription>View the air quality data over time</CardDescription>
+          <CardTitle>Environmental Particulate Matter Levels</CardTitle>
+          <CardDescription>
+            This graph displays the concentration of particulate matter (PM10,
+            PM2.5, and PM100) in the environment, measuring the presence of
+            particles with diameters of 10, 2.5, and 100 micrometers
+            respectively. Values are indicative of air quality and potential
+            health impacts.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LineChart
@@ -161,7 +148,7 @@ export function ParticleGraphCard({ data }: { data: AirQualityData[] }) {
                   <div className="flex items-center space-x-2">
                     <span
                       className={classNames(
-                        statusColor(item.name),
+                        `bg-${getColorForIndex(envSummary.findIndex((val) => val.name === item.name))}-500`,
                         "h-0.5 w-3",
                       )}
                       aria-hidden={true}
@@ -179,8 +166,12 @@ export function ParticleGraphCard({ data }: { data: AirQualityData[] }) {
       </Card>
       <Card className="relative flex h-full w-96 flex-col">
         <CardHeader>
-          <CardTitle>Air Quality Graph</CardTitle>
-          <CardDescription>View the air quality data over time</CardDescription>
+          <CardTitle>Airborne Particle Size Distribution</CardTitle>
+          <CardDescription>
+            This graph shows the detailed distribution of airborne particles by
+            size, ranging from ultrafine (0.3μm) to coarse (100μm). It provides
+            insights into the variety of particulate matter present in the air.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LineChart
@@ -209,7 +200,7 @@ export function ParticleGraphCard({ data }: { data: AirQualityData[] }) {
                   <div className="flex items-center space-x-2">
                     <span
                       className={classNames(
-                        statusColor(item.name),
+                        `bg-${getColorForIndex(particleSummary.findIndex((val) => val.name === item.name))}-500`,
                         "h-0.5 w-3",
                       )}
                       aria-hidden={true}

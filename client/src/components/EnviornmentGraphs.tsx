@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "./ui/card";
 import { map } from "zod";
+import { getColorForIndex } from "~/utils/getColorForIndex";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -30,6 +31,10 @@ export type LineChartCardProps = {
 };
 
 export function LineChartCard({ data }: { data: LineChartCardProps[] }) {
+  if (data.length === 0) {
+    // Render a placeholder or a loading indicator
+    return <div>Loading...</div>;
+  }
   const firstSummary = [
     {
       name: "temperature",
@@ -63,19 +68,32 @@ export function LineChartCard({ data }: { data: LineChartCardProps[] }) {
     },
   ];
 
+  type LineChartKeys = keyof Omit<LineChartCardProps, "seconds">;
+
+  const lineChartKeys: LineChartKeys[] = Object.keys(data[0]).filter(
+    (key): key is LineChartKeys => key !== "seconds",
+  );
+
+  const colors = lineChartKeys.map((_, index) => getColorForIndex(index));
+
   return (
     <div className="flex gap-2">
       <Card className="relative flex h-full w-96 flex-col">
         <CardHeader>
-          <CardTitle>Graph</CardTitle>
-          <CardDescription>View the graphs</CardDescription>
+          <CardTitle>
+            Overview of Temperature, Humidity, and Gas Levels
+          </CardTitle>
+          <CardDescription>
+            This graph summarizes key environmental measurements including
+            temperature (°C), humidity (%), and gas presence.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LineChart
             data={data}
             index="seconds"
             categories={["temperature", "hudmidity", "gas"]}
-            colors={["red", "green", "violet"]}
+            colors={colors}
             valueFormatter={valueFormatter}
             showLegend={false}
             showYAxis={true}
@@ -92,7 +110,7 @@ export function LineChartCard({ data }: { data: LineChartCardProps[] }) {
                     <span
                       className={classNames(
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                        statusColor[item.name],
+                        `bg-${getColorForIndex(firstSummary.findIndex((val) => val.name === item.name))}-500`,
                         "h-0.5 w-3",
                       )}
                       aria-hidden={true}
@@ -111,8 +129,10 @@ export function LineChartCard({ data }: { data: LineChartCardProps[] }) {
 
       <Card className="relative flex h-full w-96 flex-col">
         <CardHeader>
-          <CardTitle>Graph</CardTitle>
-          <CardDescription>View the graphs</CardDescription>
+          <CardTitle>Atmospheric Pressure</CardTitle>
+          <CardDescription>
+            This graph illustrates the trends in atmospheric pressure over time.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <LineChart

@@ -1,5 +1,5 @@
 "use client";
-import { LineChartCard, LineChartCardProps } from "~/components/Graphs";
+import { LineChartCard, LineChartCardProps } from "~/components/EnviornmentGraphs";
 import { PointCloudCard } from "~/components/PointCloud";
 import { Cloud, Droplets, Thermometer } from "lucide-react";
 import {
@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { useEffect, useRef, useState } from "react";
-import { AirQualityData, ParticleGraphCard } from "./ParticleGraph";
+import { AirQualityData, ParticleGraphCard } from "./ParticleGraphs";
 import { env } from "~/env";
 import PacmanLoader from "react-spinners/PacmanLoader";
 
@@ -39,7 +39,7 @@ export default function BasicView() {
           hudmidity: data.humidity as number,
           temperature: data.temperature as number,
           pressure: data.pressure as number,
-          gas: (data.gas as number) / 1000,
+          gas: (data.gas / 1000000) as number,
         } as LineChartCardProps;
 
         console.log("existing_data", existingData);
@@ -159,8 +159,8 @@ export default function BasicView() {
     <main>
       <div className="flex flex-col gap-4 p-4">
         <CardTitle className="text-4xl">Mars Sensor Dashboard</CardTitle>
+        <PointCloudCard setVertices={setVertices} vertices={vertices} />
         <div className="flex flex-wrap gap-4 ">
-          <PointCloudCard setVertices={setVertices} vertices={vertices} />
           <LineChartCard data={data} />
           <ParticleGraphCard data={particleData} />
           <Card>
